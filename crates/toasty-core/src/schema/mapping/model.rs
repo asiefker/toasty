@@ -1,4 +1,4 @@
-use super::Field;
+use super::{Field, ItemCollection};
 use crate::{
     schema::{
         app::ModelId,
@@ -65,6 +65,11 @@ pub struct Model {
     /// a model field value. Relation fields are initialized to `Null` and
     /// replaced with subqueries when `include()` is used.
     pub table_to_model: TableToModel,
+
+    /// Item-collection metadata for this model.
+    ///
+    /// Empty/default for models that are not part of an item-collection group.
+    pub item_collection: ItemCollection,
 }
 
 /// Expression template for converting table rows into model records.

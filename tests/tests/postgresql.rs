@@ -58,7 +58,10 @@ impl toasty_driver_integration_suite::Setup for PostgreSqlSetup {
 }
 
 // Generate all driver tests
-toasty_driver_integration_suite::generate_driver_tests!(PostgreSqlSetup::new(), bigdecimal_implemented: false);
+toasty_driver_integration_suite::generate_driver_tests!(PostgreSqlSetup::new(),
+    native_starts_with: false,
+    bigdecimal_implemented: false,
+);
 
 #[tokio::test]
 async fn url_encoding() {

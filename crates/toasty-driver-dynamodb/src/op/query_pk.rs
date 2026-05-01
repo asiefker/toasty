@@ -1,8 +1,10 @@
+use crate::{BuildKeyExpression, sort_key_columns};
+
 use super::{
     Connection, ExprAttrs, Result, Schema, ddb_expression, deserialize_ddb_cursor, item_to_record,
     operation, serialize_ddb_cursor, stmt,
 };
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 use toasty_core::driver::operation::QueryPkLimit;
 use toasty_core::{driver::ExecResponse, stmt::ExprContext};
 
@@ -16,10 +18,23 @@ impl Connection {
         let cx = ExprContext::new_with_target(&schema.db, table);
 
         let mut expr_attrs = ExprAttrs::default();
+        let sk_cols = sort_key_columns(table);
 
-        // When querying an index, use index filter logic (not primary key logic)
-        let is_primary_key = op.index.is_none();
-        let key_expression = ddb_expression(&cx, &mut expr_attrs, is_primary_key, &op.pk_filter);
+        // When querying an index, use index filter logic (not primary key logic).
+        // For item-collection tables with a composite sort key, build a
+        // begins_with(__sk, prefix) expression instead of per-column equality.
+        let key_expression = if op.index.is_none() {
+            BuildKeyExpression {
+                table,
+                attrs: &mut expr_attrs,
+                sk_cols: &sk_cols,
+                sk_components: HashMap::new(),
+                pk_component: None,
+            }
+            .build(&cx, &op.pk_filter)
+        } else {
+            ddb_expression(&cx, &mut expr_attrs, false, &op.pk_filter)
+        };
 
         let filter_expression = op
             .filter
@@ -72,6 +87,7 @@ impl Connection {
                             op.select
                                 .iter()
                                 .map(|column_id| schema.db.column(*column_id)),
+                            &sk_cols,
                         )
                         .map(stmt::Value::from)
                     },
@@ -107,6 +123,7 @@ impl Connection {
                             op.select
                                 .iter()
                                 .map(|column_id| schema.db.column(*column_id)),
+                            &sk_cols,
                         )
                         .map(stmt::Value::from)
                     },
@@ -158,6 +175,7 @@ impl Connection {
                                 op.select
                                     .iter()
                                     .map(|column_id| schema.db.column(*column_id)),
+                                &sk_cols,
                             )
                             .map(stmt::Value::from)?;
                             rows.push(value);

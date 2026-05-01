@@ -31,6 +31,7 @@ impl Expand<'_> {
                     }
                     None => quote! { None },
                 };
+                let item_collection = self.expand_item_collection();
                 quote! {
                     #toasty::core::schema::app::Model::Root(
                         #toasty::core::schema::app::ModelRoot {
@@ -39,6 +40,7 @@ impl Expand<'_> {
                             fields: #fields,
                             primary_key: #primary_key,
                             table_name: #table_name,
+                            item_collection: #item_collection,
                             indices: #indices,
                             version_field: #version_field,
                         }
@@ -326,6 +328,15 @@ impl Expand<'_> {
         if let Some(table_name) = &self.model.table {
             let table_name = table_name.value();
             quote! { Some(#table_name.to_string()) }
+        } else {
+            quote! { None }
+        }
+    }
+
+    fn expand_item_collection(&self) -> TokenStream {
+        let toasty = &self.toasty;
+        if let Some(ty) = &self.model.item_collection {
+            quote! { Some(<#ty as #toasty::Register>::id()) }
         } else {
             quote! { None }
         }

@@ -578,8 +578,21 @@ use proc_macro::TokenStream;
 #[proc_macro_derive(
     Model,
     attributes(
-        key, auto, default, update, column, index, unique, table, has_many, has_one, belongs_to,
-        serialize, version, deferred
+        key,
+        auto,
+        default,
+        update,
+        column,
+        index,
+        unique,
+        table,
+        has_many,
+        has_one,
+        belongs_to,
+        serialize,
+        version,
+        deferred,
+        item_collection
     )
 )]
 pub fn derive_model(input: TokenStream) -> TokenStream {
