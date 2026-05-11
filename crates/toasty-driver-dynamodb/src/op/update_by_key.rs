@@ -286,6 +286,7 @@ impl Connection {
                                     cce.item(),
                                     cce.message.as_deref(),
                                     table,
+                                    &sk_cols,
                                     op.filter.as_ref(),
                                     op.returning,
                                 );
